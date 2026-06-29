@@ -1,0 +1,22 @@
+{
+  "test_cases": [
+    {
+      "case_name": "浏览文学分类",
+      "category_name": "文学",
+      "category_url": "https://book.douban.com/tag/文学",
+      "expect_title_contains": "文学"
+    },
+    {
+      "case_name": "浏览小说分类",
+      "category_name": "小说",
+      "category_url": "https://book.douban.com/tag/小说",
+      "expect_title_contains": "小说"
+    },
+    {
+      "case_name": "浏览历史分类",
+      "category_name": "历史",
+      "category_url": "https://book.douban.com/tag/历史",
+      "expect_title_contains": "历史"
+    }
+  ]
+}

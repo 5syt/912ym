@@ -1,0 +1,28 @@
+{
+  "test_cases": [
+    {
+      "case_name": "搜索正常关键词三体",
+      "keyword": "三体",
+      "expect_has_result": true,
+      "expect_title_contains": "三体"
+    },
+    {
+      "case_name": "搜索正常关键词百年孤独",
+      "keyword": "百年孤独",
+      "expect_has_result": true,
+      "expect_title_contains": "百年孤独"
+    },
+    {
+      "case_name": "搜索特殊关键词无结果",
+      "keyword": "asdfghjkl不存在的书123",
+      "expect_has_result": false,
+      "expect_title_contains": ""
+    },
+    {
+      "case_name": "搜索空关键词",
+      "keyword": "",
+      "expect_has_result": false,
+      "expect_title_contains": ""
+    }
+  ]
+}

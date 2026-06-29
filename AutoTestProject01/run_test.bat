@@ -1,0 +1,59 @@
+@echo off
+chcp 65001 >nul
+echo ========================================
+echo   豆瓣读书自动化测试 - Allure 报告
+echo ========================================
+echo.
+
+set PROJECT_DIR=%~dp0
+cd /d "%PROJECT_DIR%"
+
+echo [1/4] 安装项目依赖...
+pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    echo ❌ 依赖安装失败，请检查网络连接或 requirements.txt
+    pause
+    exit /b 1
+)
+echo ✅ 依赖安装完成
+echo.
+
+echo [2/4] 运行 pytest 测试并生成 Allure 结果...
+python -m pytest
+if %errorlevel% neq 0 (
+    echo ⚠️  测试执行完成（存在失败用例）
+) else (
+    echo ✅ 所有测试用例执行通过
+)
+echo.
+
+echo [3/4] 生成 Allure HTML 报告...
+where allure >nul 2>nul
+if %errorlevel% equ 0 (
+    allure generate report/allure-results -o report/allure-report --clean
+    if %errorlevel% neq 0 (
+        echo ❌ Allure 报告生成失败
+        pause
+        exit /b 1
+    )
+    echo ✅ Allure HTML 报告生成完成
+) else (
+    echo ⚠️  未检测到 Allure 命令行工具，跳过报告生成
+    echo    请先安装 Allure: https://allurereport.org/docs/install/
+)
+echo.
+
+echo [4/4] 完成！
+echo ========================================
+echo   测试结果目录: %PROJECT_DIR%report\allure-results
+where allure >nul 2>nul
+if %errorlevel% equ 0 (
+    echo   HTML 报告路径: %PROJECT_DIR%report\allure-report\index.html
+    echo.
+    echo   查看报告命令:
+    echo     allure serve report\allure-results
+    echo   或直接在浏览器中打开:
+    echo     report\allure-report\index.html
+)
+echo ========================================
+pause

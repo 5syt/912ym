@@ -1,0 +1,22 @@
+{
+  "test_cases": [
+    {
+      "case_name": "查看三体图书详情",
+      "search_keyword": "三体",
+      "expect_title_contains": "三体",
+      "expect_author_contains": "刘慈欣"
+    },
+    {
+      "case_name": "查看活着图书详情",
+      "search_keyword": "活着",
+      "expect_title_contains": "活着",
+      "expect_author_contains": "余华"
+    },
+    {
+      "case_name": "查看百年孤独图书详情",
+      "search_keyword": "百年孤独",
+      "expect_title_contains": "百年孤独",
+      "expect_author_contains": "加西亚·马尔克斯"
+    }
+  ]
+}
