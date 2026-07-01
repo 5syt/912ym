@@ -111,9 +111,9 @@ class HomePage(BasePage):
         search_input = self._find_search_input()
         search_input.clear()
         search_input.send_keys(keyword)
-        # 找到搜索按钮并点击
+        # 找到搜索按钮并点击（带安全验证处理）
         search_btn = self._find_search_button()
-        search_btn.click()
+        self.click_element(search_btn)
         return self
 
     def click_category(self, category_name):

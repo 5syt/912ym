@@ -150,13 +150,41 @@ class BasePage:
             self.logger.info(f"点击元素：{locator}")
             element = self.wait_element_clickable(locator)
             element.click()
-            # 点击后检查是否跳转到安全验证页
-            import time
-            time.sleep(1)
-            self._handle_security_check()
+            self._check_and_handle_security()
         except Exception as e:
             self.logger.error(f"点击元素失败：{locator}，错误信息：{e}")
             raise
+
+    def click_element(self, element):
+        """
+        点击一个已找到的 WebElement 元素（自动处理安全验证）
+
+        Args:
+            element: WebElement 元素对象
+        """
+        import time
+        try:
+            element.click()
+            time.sleep(1)
+            self._check_and_handle_security()
+        except Exception as e:
+            self.logger.warning(f"点击元素后检查安全验证时出错（可忽略）：{e}")
+
+    def _check_and_handle_security(self):
+        """
+        检查并处理安全验证页面（点击跳转后调用）
+        最多重试 3 次，确保能处理反复出现的验证
+        """
+        import time
+        for i in range(3):
+            try:
+                time.sleep(1)
+                if self._handle_security_check():
+                    self.logger.info(f"第 {i+1} 次安全验证处理成功")
+                else:
+                    break
+            except Exception:
+                break
 
     def input_text(self, locator, text):
         """
@@ -274,8 +302,8 @@ class BasePage:
         try:
             self.logger.info(f"打开 URL：{url}")
             self.driver.get(url)
-            # 自动检查并处理安全验证
-            self._handle_security_check()
+            # 自动检查并处理安全验证（最多重试3次）
+            self._check_and_handle_security()
         except Exception as e:
             self.logger.error(f"打开 URL 失败：{url}，错误信息：{e}")
             raise
@@ -284,41 +312,96 @@ class BasePage:
         """
         自动检测并处理豆瓣安全验证页面
         如果跳转到 sec.douban.com 安全验证页，自动点击"点我继续浏览"按钮
+
+        Returns:
+            bool: 是否检测并处理了安全验证
         """
         import time
+        from selenium.webdriver.common.by import By as By2
         try:
             current_url = self.driver.current_url
-            if "sec.douban.com" in current_url or "安全验证" in self.driver.title:
+            page_title = self.driver.title
+
+            # 检测安全验证页面的多种特征
+            is_security_page = (
+                "sec.douban.com" in current_url
+                or "安全验证" in page_title
+                or "sec" in current_url and "douban" in current_url
+            )
+
+            if is_security_page:
                 self.logger.info("检测到豆瓣安全验证页面，尝试自动处理...")
+
                 # 尝试多套定位器找到"点我继续浏览"按钮
                 button_selectors = [
-                    ("xpath", "//button[contains(text(), '继续浏览')]"),
-                    ("xpath", "//a[contains(text(), '继续浏览')]"),
-                    ("xpath", "//input[@value='继续浏览']"),
-                    ("css selector", "button"),
-                    ("css selector", ".btn"),
-                    ("css selector", "input[type='submit']"),
+                    "//button[contains(text(), '继续浏览')]",
+                    "//button[contains(text(), '继续')]",
+                    "//a[contains(text(), '继续浏览')]",
+                    "//a[contains(text(), '继续')]",
+                    "//input[@value='继续浏览']",
+                    "//input[@value='确认']",
+                    "//button[contains(@class, 'btn')]",
+                    "//a[contains(@class, 'btn')]",
+                    "//button",
+                    "//a[@role='button']",
                 ]
-                for by, selector in button_selectors:
+
+                # 先等待页面加载一下
+                time.sleep(1.5)
+
+                for xpath in button_selectors:
                     try:
-                        from selenium.webdriver.common.by import By as By2
-                        elements = self.driver.find_elements(getattr(By2, by.upper().replace('CSS SELECTOR', 'CSS_SELECTOR')), selector)
+                        elements = self.driver.find_elements(By2.XPATH, xpath)
                         if elements and len(elements) > 0:
                             for btn in elements:
                                 try:
-                                    if btn.is_displayed() and ("继续" in btn.text or "浏览" in btn.text or "确认" in btn.text):
-                                        btn.click()
-                                        self.logger.info("已点击安全验证按钮")
-                                        time.sleep(2)
-                                        return True
+                                    if btn.is_displayed():
+                                        btn_text = btn.text.strip()
+                                        # 匹配包含"继续"、"浏览"、"确认"、"点我"等关键词的按钮
+                                        if any(kw in btn_text for kw in ["继续", "浏览", "确认", "点我", "进入"]):
+                                            self.logger.info(f"找到验证按钮：{btn_text}，正在点击...")
+                                            btn.click()
+                                            time.sleep(2)
+                                            # 点击后再检查一次是否还有验证页
+                                            if "sec.douban.com" not in self.driver.current_url:
+                                                self.logger.info("安全验证已通过")
+                                                return True
+                                            else:
+                                                self.logger.info("点击后仍在验证页，继续尝试...")
                                 except Exception:
                                     continue
                     except Exception:
                         continue
+
+                # 尝试用 JS 点击所有可能的按钮
+                try:
+                    self.logger.info("尝试用 JavaScript 查找并点击验证按钮...")
+                    js_code = """
+                    var buttons = document.querySelectorAll('button, a, input[type="submit"], .btn');
+                    for (var i = 0; i < buttons.length; i++) {
+                        var txt = buttons[i].textContent || buttons[i].value || '';
+                        if (txt.indexOf('继续') > -1 || txt.indexOf('浏览') > -1 || txt.indexOf('确认') > -1 || txt.indexOf('点我') > -1) {
+                            buttons[i].click();
+                            return 'clicked: ' + txt;
+                        }
+                    }
+                    return 'not found';
+                    """
+                    result = self.driver.execute_script(js_code)
+                    if result and "clicked" in result:
+                        self.logger.info(f"JS 点击验证按钮成功：{result}")
+                        time.sleep(2)
+                        return True
+                except Exception as e:
+                    self.logger.debug(f"JS 点击失败（可忽略）：{e}")
+
                 # 如果没找到按钮，刷新页面试试
                 self.logger.warning("未找到验证按钮，刷新页面重试...")
                 self.driver.refresh()
                 time.sleep(2)
+                # 刷新后再检查一次
+                if "sec.douban.com" not in self.driver.current_url:
+                    return True
                 return False
         except Exception as e:
             self.logger.debug(f"检查安全验证时出错（可忽略）：{e}")

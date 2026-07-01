@@ -60,11 +60,11 @@ class TestCategoryBrowse:
                 home_page.click_category(category_name)
                 logger.info("通过首页导航栏点击分类链接成功")
             except TimeoutException:
-                # 如果导航栏定位不到分类，直接访问 category_url
+                # 如果导航栏定位不到分类，直接访问 category_url（带安全验证处理）
                 logger.warning(
                     f"首页导航栏未找到【{category_name}】分类链接，直接访问分类URL"
                 )
-                driver.get(category_url)
+                category_page.open_url(category_url)
 
         with allure.step("步骤3：验证跳转到分类页面"):
             logger.info("步骤3：验证跳转到分类页面")
@@ -116,7 +116,7 @@ class TestCategoryBrowse:
 
         with allure.step(f"步骤1：直接打开【{category_name}】分类页面"):
             logger.info(f"步骤1：直接打开【{category_name}】分类页面")
-            driver.get(category_url)
+            category_page.open_url(category_url)
 
         with allure.step("步骤2：验证图书列表展示"):
             logger.info("步骤2：验证图书列表展示")

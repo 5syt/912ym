@@ -115,12 +115,12 @@ class CategoryPage(BasePage):
                         try:
                             link = book_element.find_element(By.CSS_SELECTOR, tag)
                             self.logger.info(f"点击图书：{link.text}")
-                            link.click()
+                            self.click_element(link)
                             return True
                         except Exception:
                             continue
                     # 都不行就点击元素本身
-                    book_element.click()
+                    self.click_element(book_element)
                     return True
             except Exception:
                 continue

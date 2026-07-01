@@ -118,13 +118,13 @@ class SearchResultPage(BasePage):
                 for tag in ["h2 a", "h3 a", ".title a", "a.title", "a"]:
                     try:
                         link = first_item.find_element(By.CSS_SELECTOR, tag)
-                        link.click()
+                        self.click_element(link)
                         self.logger.info("点击第一个搜索结果成功")
                         return True
                     except Exception:
                         continue
                 # 都不行就点击元素本身
-                first_item.click()
+                self.click_element(first_item)
                 return True
             except Exception as e:
                 self.logger.error(f"点击第一个搜索结果失败：{e}")
