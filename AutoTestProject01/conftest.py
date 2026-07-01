@@ -3,6 +3,15 @@ pytest 配置文件
 包含 fixtures 和钩子函数的定义
 """
 import os
+import sys
+from pathlib import Path
+
+# 自动将项目根目录添加到 Python 路径（兼容 PyCharm 和命令行运行）
+_current_file = Path(__file__).resolve()
+_project_root = _current_file.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
 from datetime import datetime
 
 import allure
