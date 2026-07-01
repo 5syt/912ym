@@ -70,6 +70,16 @@ def driver():
     logger.info("Chrome 浏览器已关闭")
 
 
+def pytest_runtest_setup(item):
+    """
+    每个测试用例执行前的钩子
+    用于降低测试频率，减少触发豆瓣反爬的概率
+    """
+    import time
+    time.sleep(2)
+    logger.info(f"测试用例准备开始：{item.name}")
+
+
 @pytest.hookimpl(hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """

@@ -138,7 +138,7 @@ class BasePage:
 
     def click(self, locator):
         """
-        点击元素，先等待可点击再点击
+        点击元素，先等待可点击再点击（自动处理安全验证）
 
         Args:
             locator (tuple): 元素定位器，格式为 (By.ID, "id_value")
@@ -150,6 +150,10 @@ class BasePage:
             self.logger.info(f"点击元素：{locator}")
             element = self.wait_element_clickable(locator)
             element.click()
+            # 点击后检查是否跳转到安全验证页
+            import time
+            time.sleep(1)
+            self._handle_security_check()
         except Exception as e:
             self.logger.error(f"点击元素失败：{locator}，错误信息：{e}")
             raise
@@ -262,7 +266,7 @@ class BasePage:
 
     def open_url(self, url):
         """
-        打开指定 URL
+        打开指定 URL（自动处理豆瓣安全验证）
 
         Args:
             url (str): 要打开的网址
@@ -270,9 +274,55 @@ class BasePage:
         try:
             self.logger.info(f"打开 URL：{url}")
             self.driver.get(url)
+            # 自动检查并处理安全验证
+            self._handle_security_check()
         except Exception as e:
             self.logger.error(f"打开 URL 失败：{url}，错误信息：{e}")
             raise
+
+    def _handle_security_check(self):
+        """
+        自动检测并处理豆瓣安全验证页面
+        如果跳转到 sec.douban.com 安全验证页，自动点击"点我继续浏览"按钮
+        """
+        import time
+        try:
+            current_url = self.driver.current_url
+            if "sec.douban.com" in current_url or "安全验证" in self.driver.title:
+                self.logger.info("检测到豆瓣安全验证页面，尝试自动处理...")
+                # 尝试多套定位器找到"点我继续浏览"按钮
+                button_selectors = [
+                    ("xpath", "//button[contains(text(), '继续浏览')]"),
+                    ("xpath", "//a[contains(text(), '继续浏览')]"),
+                    ("xpath", "//input[@value='继续浏览']"),
+                    ("css selector", "button"),
+                    ("css selector", ".btn"),
+                    ("css selector", "input[type='submit']"),
+                ]
+                for by, selector in button_selectors:
+                    try:
+                        from selenium.webdriver.common.by import By as By2
+                        elements = self.driver.find_elements(getattr(By2, by.upper().replace('CSS SELECTOR', 'CSS_SELECTOR')), selector)
+                        if elements and len(elements) > 0:
+                            for btn in elements:
+                                try:
+                                    if btn.is_displayed() and ("继续" in btn.text or "浏览" in btn.text or "确认" in btn.text):
+                                        btn.click()
+                                        self.logger.info("已点击安全验证按钮")
+                                        time.sleep(2)
+                                        return True
+                                except Exception:
+                                    continue
+                    except Exception:
+                        continue
+                # 如果没找到按钮，刷新页面试试
+                self.logger.warning("未找到验证按钮，刷新页面重试...")
+                self.driver.refresh()
+                time.sleep(2)
+                return False
+        except Exception as e:
+            self.logger.debug(f"检查安全验证时出错（可忽略）：{e}")
+        return False
 
     def get_title(self):
         """
