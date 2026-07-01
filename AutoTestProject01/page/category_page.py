@@ -43,7 +43,7 @@ class CategoryPage(BasePage):
 
     def get_category_title(self):
         """
-        获取分类标题
+        获取分类标题（快速检查，不等待超时）
 
         Returns:
             str: 分类标题文本
@@ -51,10 +51,17 @@ class CategoryPage(BasePage):
         self.logger.info("获取分类标题")
         for selector in self.category_title_selectors:
             try:
-                text = self.get_text(selector)
-                if text and text.strip():
-                    self.logger.info(f"分类标题：{text}")
-                    return text.strip()
+                # 快速检查：用 find_elements 不触发超时等待
+                elements = self.driver.find_elements(*selector)
+                if elements and len(elements) > 0:
+                    try:
+                        if elements[0].is_displayed():
+                            text = elements[0].text.strip()
+                            if text:
+                                self.logger.info(f"分类标题：{text}")
+                                return text
+                    except Exception:
+                        pass
             except Exception:
                 continue
         # 都不行就返回页面标题
@@ -64,7 +71,7 @@ class CategoryPage(BasePage):
 
     def get_book_list_count(self):
         """
-        获取当前页图书列表数量
+        获取当前页图书列表数量（快速检查，不等待超时）
 
         Returns:
             int: 当前页的图书数量
@@ -72,10 +79,15 @@ class CategoryPage(BasePage):
         self.logger.info("获取当前页图书列表数量")
         for selector in self.book_list_selectors:
             try:
-                elements = self.find_elements(selector)
+                # 快速检查：用 find_elements 不触发超时等待
+                elements = self.driver.find_elements(*selector)
                 if elements and len(elements) > 0:
-                    self.logger.info(f"使用定位器 {selector} 找到 {len(elements)} 本图书")
-                    return len(elements)
+                    try:
+                        if elements[0].is_displayed():
+                            self.logger.info(f"使用定位器 {selector} 找到 {len(elements)} 本图书")
+                            return len(elements)
+                    except Exception:
+                        pass
             except Exception:
                 continue
         self.logger.warning("所有定位器都未找到图书列表，返回0")

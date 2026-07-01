@@ -66,6 +66,7 @@ class BookDetailPage(BasePage):
     def _try_selectors(self, selectors_list, get_func="get_text"):
         """
         尝试多套定位器，返回第一个成功的结果
+        优化：使用 find_elements 快速检查，不触发长时间等待
 
         Args:
             selectors_list: 定位器列表
@@ -76,12 +77,16 @@ class BookDetailPage(BasePage):
         """
         for selector in selectors_list:
             try:
-                if get_func == "get_text":
-                    text = self.get_text(selector)
-                    if text and text.strip():
-                        return text.strip()
-                elif get_func == "find_element":
-                    return self.find_element(selector)
+                # 快速检查：用 find_elements 判断元素是否存在，不等超时
+                elements = self.driver.find_elements(*selector)
+                if elements and len(elements) > 0 and elements[0].is_displayed():
+                    # 元素存在且可见，获取文本
+                    if get_func == "get_text":
+                        text = elements[0].text
+                        if text and text.strip():
+                            return text.strip()
+                    elif get_func == "find_element":
+                        return elements[0]
             except Exception:
                 continue
         return None

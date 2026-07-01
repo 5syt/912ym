@@ -44,7 +44,7 @@ class SearchResultPage(BasePage):
 
     def get_result_items(self):
         """
-        获取搜索结果列表项（尝试多套定位器）
+        获取搜索结果列表项（尝试多套定位器，快速检查，不等待超时）
 
         Returns:
             list: 搜索结果元素列表
@@ -52,10 +52,16 @@ class SearchResultPage(BasePage):
         self.logger.info("获取搜索结果列表项")
         for selector in self.result_items_selectors:
             try:
-                elements = self.find_elements(selector)
+                # 快速检查：用 find_elements 不触发超时等待
+                elements = self.driver.find_elements(*selector)
                 if elements and len(elements) > 0:
-                    self.logger.info(f"使用定位器 {selector} 找到 {len(elements)} 个结果")
-                    return elements
+                    # 检查第一个元素是否可见
+                    try:
+                        if elements[0].is_displayed():
+                            self.logger.info(f"使用定位器 {selector} 找到 {len(elements)} 个结果")
+                            return elements
+                    except Exception:
+                        pass
             except Exception:
                 continue
         self.logger.warning("所有定位器都未找到结果项，返回空列表")
