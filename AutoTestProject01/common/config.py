@@ -12,8 +12,8 @@ PROJECT_ROOT = os.path.dirname(COMMON_DIR)
 # 基础 URL
 BASE_URL = "https://book.douban.com"
 
-# 显式等待超时时间（秒）
-TIMEOUT = 10
+# 显式等待超时时间（秒）- 优化：从10秒缩短到5秒，加快测试速度
+TIMEOUT = 5
 
 # 浏览器类型
 BROWSER = "chrome"

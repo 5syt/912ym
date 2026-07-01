@@ -32,6 +32,7 @@ logger = get_logger()
 def driver():
     """
     浏览器驱动 fixture，每个测试用例创建一个新的浏览器实例
+    优化：禁用图片加载、启用无头模式，加快测试速度
 
     Returns:
         webdriver.Chrome: Chrome 浏览器驱动实例
@@ -39,26 +40,42 @@ def driver():
     # 配置 ChromeOptions
     chrome_options = Options()
 
-    # 通过环境变量控制无头模式，默认关闭
-    headless = os.getenv("HEADLESS", "false").lower() == "true"
-    if headless:
-        chrome_options.add_argument("--headless=new")
-        logger.info("启用无头模式")
+    # 优化1：禁用图片加载，大幅加快页面加载速度
+    prefs = {
+        "profile.managed_default_content_settings.images": 2,  # 禁用图片
+    }
+    chrome_options.add_experimental_option("prefs", prefs)
+
+    # 优化2：无头模式（可选，取消注释即可启用）
+    # headless = os.getenv("HEADLESS", "true").lower() == "true"
+    # if headless:
+    #     chrome_options.add_argument("--headless=new")
+    #     logger.info("启用无头模式")
 
     # 启动最大化
     chrome_options.add_argument("--start-maximized")
     # 禁用 GPU 加速
     chrome_options.add_argument("--disable-gpu")
-    # 禁用沙箱模式（Linux 环境下需要）
+    # 禁用沙箱模式
     chrome_options.add_argument("--no-sandbox")
-    # 禁用 /dev/shm 共享内存（避免资源限制）
+    # 禁用 /dev/shm 共享内存
     chrome_options.add_argument("--disable-dev-shm-usage")
+    # 禁用扩展
+    chrome_options.add_argument("--disable-extensions")
+    # 禁用浏览器通知
+    chrome_options.add_argument("--disable-notifications")
+    # 禁用弹窗
+    chrome_options.add_argument("--disable-popup-blocking")
 
-    logger.info("启动 Chrome 浏览器...")
+    logger.info("启动 Chrome 浏览器（已禁用图片加载，速度更快）...")
     # 创建 WebDriver 实例
     driver = webdriver.Chrome(options=chrome_options)
     # 最大化窗口
     driver.maximize_window()
+    # 设置页面加载超时
+    driver.set_page_load_timeout(10)
+    # 优化：设置隐式等待（每次查找元素最多等3秒，比显式等待更高效）
+    driver.implicitly_wait(3)
     logger.info("Chrome 浏览器启动成功")
 
     # yield 之前是 setup，yield 之后是 teardown
