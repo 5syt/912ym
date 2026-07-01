@@ -46,11 +46,11 @@ def driver():
     }
     chrome_options.add_experimental_option("prefs", prefs)
 
-    # 优化2：无头模式（可选，取消注释即可启用）
-    # headless = os.getenv("HEADLESS", "true").lower() == "true"
-    # if headless:
-    #     chrome_options.add_argument("--headless=new")
-    #     logger.info("启用无头模式")
+    # 优化2：无头模式（不显示浏览器窗口，速度更快）
+    headless = os.getenv("HEADLESS", "true").lower() == "true"
+    if headless:
+        chrome_options.add_argument("--headless=new")
+        logger.info("启用无头模式")
 
     # 启动最大化
     chrome_options.add_argument("--start-maximized")
