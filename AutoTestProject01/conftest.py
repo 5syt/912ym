@@ -248,14 +248,11 @@ def pytest_html_results_summary(prefix, summary, postfix):
         summary: 摘要内容列表
         postfix: 摘要后缀列表
     """
-    from py.xml import html
-
-    prefix.extend([
-        html.p("项目名称：豆瓣读书系统自动化测试"),
-        html.p("测试框架：Pytest + Selenium + pytest-html"),
-        html.p("测试环境：Chrome 浏览器 / 生产环境"),
-        html.p("被测系统：豆瓣读书 (https://book.douban.com)"),
-    ])
+    # 添加自定义摘要文本（使用纯文本方式）
+    prefix.append("项目名称：豆瓣读书系统自动化测试")
+    prefix.append("测试框架：Pytest + Selenium + pytest-html")
+    prefix.append("测试环境：Chrome 浏览器 / 生产环境")
+    prefix.append("被测系统：豆瓣读书 (https://book.douban.com)")
 
 
 def pytest_configure(config):
