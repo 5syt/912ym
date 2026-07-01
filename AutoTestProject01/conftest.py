@@ -248,11 +248,21 @@ def pytest_html_results_summary(prefix, summary, postfix):
         summary: 摘要内容列表
         postfix: 摘要后缀列表
     """
-    # 添加自定义摘要文本（使用纯文本方式）
-    prefix.append("项目名称：豆瓣读书系统自动化测试")
-    prefix.append("测试框架：Pytest + Selenium + pytest-html")
-    prefix.append("测试环境：Chrome 浏览器 / 生产环境")
-    prefix.append("被测系统：豆瓣读书 (https://book.douban.com)")
+    try:
+        from py.xml import html
+        prefix.extend([
+            html.p("项目名称：豆瓣读书系统自动化测试"),
+            html.p("测试框架：Pytest + Selenium + pytest-html"),
+            html.p("测试环境：Chrome 浏览器 / 生产环境"),
+            html.p("被测系统：豆瓣读书 (https://book.douban.com)"),
+        ])
+    except ImportError:
+        prefix.extend([
+            "项目名称：豆瓣读书系统自动化测试",
+            "测试框架：Pytest + Selenium + pytest-html",
+            "测试环境：Chrome 浏览器 / 生产环境",
+            "被测系统：豆瓣读书 (https://book.douban.com)",
+        ])
 
 
 def pytest_configure(config):
@@ -262,12 +272,14 @@ def pytest_configure(config):
     Args:
         config: pytest 配置对象
     """
-    config._metadata = {
-        "项目名称": "豆瓣读书自动化测试",
-        "测试环境": "生产环境",
-        "浏览器": "Chrome",
-        "操作系统": "Linux / Windows",
-        "测试框架": "Pytest + Selenium",
-        "报告类型": "pytest-html",
-        "被测系统": "豆瓣读书 (https://book.douban.com)",
-    }
+    try:
+        if hasattr(config, "_metadata") and isinstance(config._metadata, dict):
+            config._metadata["项目名称"] = "豆瓣读书自动化测试"
+            config._metadata["测试环境"] = "生产环境"
+            config._metadata["浏览器"] = "Chrome"
+            config._metadata["操作系统"] = "Linux / Windows"
+            config._metadata["测试框架"] = "Pytest + Selenium"
+            config._metadata["报告类型"] = "pytest-html + Allure"
+            config._metadata["被测系统"] = "豆瓣读书 (https://book.douban.com)"
+    except Exception as e:
+        pass
