@@ -2,6 +2,7 @@
 豆瓣读书分类页页面类
 封装分类页的元素定位和业务操作方法
 """
+import time
 from selenium.webdriver.common.by import By
 
 from base.base_page import BasePage
@@ -140,6 +141,48 @@ class CategoryPage(BasePage):
         except Exception:
             return False
 
+    def wait_for_page_load(self, keyword=None, timeout=5):
+        """
+        等待分类页加载完成（等待图书列表出现，或页面标题包含关键词）
+
+        Args:
+            keyword: 期望标题包含的关键词，可选
+            timeout: 超时时间，默认5秒
+
+        Returns:
+            bool: 是否加载成功
+        """
+        self.logger.info("等待分类页加载完成...")
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            # 检查是否有图书列表
+            for selector in self.book_list_selectors:
+                try:
+                    elements = self.driver.find_elements(*selector)
+                    if elements and len(elements) > 0:
+                        try:
+                            if elements[0].is_displayed():
+                                self.logger.info(f"找到图书列表，页面加载完成，共 {len(elements)} 本")
+                                return True
+                        except Exception:
+                            pass
+                except Exception:
+                    continue
+            # 检查页面标题
+            if keyword:
+                try:
+                    title = self.driver.title
+                    if keyword in title or "豆瓣" in title:
+                        self.logger.info(f"页面标题加载完成：{title}")
+                        # 再多等一小会儿，让内容加载
+                        time.sleep(1)
+                        return True
+                except Exception:
+                    pass
+            time.sleep(0.5)
+        self.logger.warning("页面加载超时")
+        return False
+
     def has_pagination(self):
         """
         判断是否有分页区域
@@ -150,9 +193,14 @@ class CategoryPage(BasePage):
         self.logger.info("判断是否有分页区域")
         for selector in self.pagination_selectors:
             try:
-                if self.is_element_visible(selector):
-                    self.logger.info("找到分页区域")
-                    return True
+                elements = self.driver.find_elements(*selector)
+                if elements and len(elements) > 0:
+                    try:
+                        if elements[0].is_displayed():
+                            self.logger.info("找到分页区域")
+                            return True
+                    except Exception:
+                        pass
             except Exception:
                 continue
         self.logger.info("未找到分页区域")

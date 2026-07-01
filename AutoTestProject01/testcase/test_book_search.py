@@ -59,19 +59,14 @@ class TestBookSearch:
             logger.info("步骤1：打开豆瓣读书首页")
             home_page.open()
 
-        # 步骤2：在搜索框输入关键词
-        with allure.step(f"在搜索框输入关键词：{keyword}"):
-            logger.info(f"步骤2：在搜索框输入关键词：{keyword}")
-            home_page.input_text(home_page.search_input, keyword)
+        # 步骤2：搜索图书
+        with allure.step(f"搜索图书关键词：{keyword}"):
+            logger.info(f"步骤2：搜索图书关键词：{keyword}")
+            home_page.search_book(keyword)
 
-        # 步骤3：点击搜索按钮
-        with allure.step("点击搜索按钮"):
-            logger.info("步骤3：点击搜索按钮")
-            home_page.click(home_page.search_button)
-
-        # 步骤4：验证搜索结果
+        # 步骤3：验证搜索结果
         with allure.step("验证搜索结果"):
-            logger.info("步骤4：验证搜索结果")
+            logger.info("步骤3：验证搜索结果")
 
             if expect_has_result:
                 # 有结果的断言

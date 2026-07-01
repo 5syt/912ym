@@ -18,14 +18,27 @@ class HomePage(BasePage):
 
     # ==================== 元素定位器 ====================
 
-    # 搜索输入框
-    search_input = (By.ID, "inp-query")
+    # 搜索输入框 - 多套备选
+    search_input_selectors = [
+        (By.ID, "inp-query"),
+        (By.CSS_SELECTOR, "#inp-query"),
+        (By.NAME, "search_text"),
+        (By.CSS_SELECTOR, "input[name='search_text']"),
+        (By.CSS_SELECTOR, "input.inp-query"),
+        (By.CSS_SELECTOR, ".nav-search input[type='text']"),
+        (By.CSS_SELECTOR, ".search-input"),
+    ]
 
-    # 搜索按钮
-    search_button = (By.CSS_SELECTOR, "input[type='submit']")
+    # 搜索按钮 - 多套备选
+    search_button_selectors = [
+        (By.CSS_SELECTOR, "input[type='submit']"),
+        (By.CSS_SELECTOR, "button[type='submit']"),
+        (By.CSS_SELECTOR, ".search-btn"),
+        (By.CSS_SELECTOR, "#nav-search-btn"),
+        (By.CSS_SELECTOR, ".nav-search-btn"),
+    ]
 
     # 导航栏分类链接（文学、流行、文化等）
-    # 使用 XPath 定位包含指定文本的导航链接
     category_link = (By.XPATH, "//div[@class='nav-items']/a[contains(text(), '{}')]")
 
     # ==================== 业务操作方法 ====================
@@ -41,6 +54,48 @@ class HomePage(BasePage):
         self.open_url(self.url)
         return self
 
+    def _find_search_input(self):
+        """
+        尝试多套定位器找到搜索框
+
+        Returns:
+            WebElement: 搜索框元素
+        """
+        for selector in self.search_input_selectors:
+            try:
+                elements = self.driver.find_elements(*selector)
+                if elements and len(elements) > 0:
+                    try:
+                        if elements[0].is_displayed():
+                            return elements[0]
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+        # 都不行就用显式等待找第一个
+        return self.wait_element_visible(self.search_input_selectors[0])
+
+    def _find_search_button(self):
+        """
+        尝试多套定位器找到搜索按钮
+
+        Returns:
+            WebElement: 搜索按钮元素
+        """
+        for selector in self.search_button_selectors:
+            try:
+                elements = self.driver.find_elements(*selector)
+                if elements and len(elements) > 0:
+                    try:
+                        if elements[0].is_displayed():
+                            return elements[0]
+                    except Exception:
+                        pass
+            except Exception:
+                continue
+        # 都不行就用显式等待找第一个
+        return self.wait_element_visible(self.search_button_selectors[0])
+
     def search_book(self, keyword):
         """
         在搜索框输入关键词并点击搜索按钮
@@ -52,10 +107,13 @@ class HomePage(BasePage):
             HomePage: 当前页面对象（页面跳转由测试用例处理）
         """
         self.logger.info(f"搜索图书，关键词：{keyword}")
-        # 输入搜索关键词
-        self.input_text(self.search_input, keyword)
-        # 点击搜索按钮
-        self.click(self.search_button)
+        # 找到搜索框并输入
+        search_input = self._find_search_input()
+        search_input.clear()
+        search_input.send_keys(keyword)
+        # 找到搜索按钮并点击
+        search_btn = self._find_search_button()
+        search_btn.click()
         return self
 
     def click_category(self, category_name):

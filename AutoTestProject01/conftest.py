@@ -89,10 +89,18 @@ def pytest_runtest_makereport(item, call):
         driver = item.funcargs.get("driver", None)
 
         if driver is not None:
-            # 生成截图文件名：用例名_时间戳
+            # 生成安全的截图文件名（过滤 Windows 不支持的字符）
             case_name = item.name
+            # 替换 Windows 文件名不支持的字符
+            safe_case_name = case_name.replace("/", "_").replace("\\", "_") \
+                .replace(":", "_").replace("*", "_").replace("?", "_") \
+                .replace('"', "_").replace("<", "_").replace(">", "_") \
+                .replace("|", "_").replace("[", "_").replace("]", "_")
+            # 如果文件名太长，截断
+            if len(safe_case_name) > 80:
+                safe_case_name = safe_case_name[:80]
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            screenshot_name = "{}_{}".format(case_name, timestamp)
+            screenshot_name = "{}_{}".format(safe_case_name, timestamp)
 
             logger.info("测试用例 '{}' 失败，正在截图...".format(case_name))
 

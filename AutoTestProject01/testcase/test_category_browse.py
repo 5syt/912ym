@@ -69,6 +69,10 @@ class TestCategoryBrowse:
         with allure.step("步骤3：验证跳转到分类页面"):
             logger.info("步骤3：验证跳转到分类页面")
 
+            # 等待页面加载
+            with allure.step("等待分类页加载完成"):
+                category_page.wait_for_page_load(keyword=expect_title_contains)
+
             # 断言页面标题包含分类名称（放宽断言）
             with allure.step("验证页面标题包含分类名称"):
                 page_title = driver.title
@@ -116,6 +120,10 @@ class TestCategoryBrowse:
 
         with allure.step("步骤2：验证图书列表展示"):
             logger.info("步骤2：验证图书列表展示")
+
+            # 等待页面加载
+            with allure.step("等待分类页加载完成"):
+                category_page.wait_for_page_load(keyword=category_name)
 
             # 断言分类页正常加载显示
             with allure.step("验证分类页正常加载显示"):
