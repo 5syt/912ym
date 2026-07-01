@@ -127,6 +127,21 @@ def pytest_runtest_makereport(item, call):
                         attachment_type=allure.attachment_type.PNG,
                     )
                 logger.info("截图已附加到 Allure 报告")
+
+                # 将截图附加到 pytest-html 报告中
+                pytest_html = item.config.pluginmanager.getplugin("html")
+                if pytest_html is not None:
+                    with open(screenshot_path, "rb") as f:
+                        screenshot_bytes = f.read()
+                    import base64
+                    screenshot_base64 = base64.b64encode(screenshot_bytes).decode("utf-8")
+                    extra = getattr(report, "extra", [])
+                    html = '<div><img src="data:image/png;base64,{}" alt="失败截图" style="width: 600px; height: auto;" onclick="window.open(this.src)"/></div>'.format(
+                        screenshot_base64
+                    )
+                    extra.append(pytest_html.extras.html(html))
+                    report.extra = extra
+                    logger.info("截图已附加到 pytest-html 报告")
             except Exception as e:
                 logger.error("截图失败：{}".format(str(e)))
         else:
@@ -212,3 +227,50 @@ BASE_URL={}
         logger.info("Allure 环境配置文件已生成：{}".format(env_file_path))
     except Exception as e:
         logger.error("生成 Allure 环境配置文件失败：{}".format(str(e)))
+
+
+def pytest_html_report_title(report):
+    """
+    pytest-html 报告标题钩子
+
+    Args:
+        report: pytest-html 报告对象
+    """
+    report.title = "豆瓣读书自动化测试报告"
+
+
+def pytest_html_results_summary(prefix, summary, postfix):
+    """
+    pytest-html 报告摘要钩子，添加自定义摘要信息
+
+    Args:
+        prefix: 摘要前缀列表
+        summary: 摘要内容列表
+        postfix: 摘要后缀列表
+    """
+    from py.xml import html
+
+    prefix.extend([
+        html.p("项目名称：豆瓣读书系统自动化测试"),
+        html.p("测试框架：Pytest + Selenium + pytest-html"),
+        html.p("测试环境：Chrome 浏览器 / 生产环境"),
+        html.p("被测系统：豆瓣读书 (https://book.douban.com)"),
+    ])
+
+
+def pytest_configure(config):
+    """
+    pytest 配置钩子，设置 pytest-html 报告的环境信息
+
+    Args:
+        config: pytest 配置对象
+    """
+    config._metadata = {
+        "项目名称": "豆瓣读书自动化测试",
+        "测试环境": "生产环境",
+        "浏览器": "Chrome",
+        "操作系统": "Linux / Windows",
+        "测试框架": "Pytest + Selenium",
+        "报告类型": "pytest-html",
+        "被测系统": "豆瓣读书 (https://book.douban.com)",
+    }
